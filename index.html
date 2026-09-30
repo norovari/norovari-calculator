@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Norovari x Visto ROI Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .slider-thumb::-webkit-slider-thumb {
+            -webkit-appearance: none; appearance: none; width: 20px; height: 20px;
+            background: #059669; cursor: pointer; border-radius: 50%;
+        }
+        .slider-thumb::-moz-range-thumb {
+            width: 20px; height: 20px; background: #059669; cursor: pointer; border-radius: 50%;
+        }
+        .toggle-btn-active { background-color: white; color: #064e3b; box-shadow: 0 1px 3px rgba(0,0,0,0.1); font-weight: 600; }
+        .toggle-btn-inactive { color: #6b7280; }
+        .toggle-btn-inactive:hover { color: #374151; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <header class="bg-emerald-900 text-white py-8 px-4 shadow-lg">
+        <div class="max-w-3xl mx-auto text-center">
+            <h1 class="text-3xl font-bold mb-2">Norovari Tours <span class="text-amber-400">&</span> Visto.host</h1>
+            <p class="text-emerald-100 text-lg">Interactive Partnership Calculator</p>
+        </div</header>
+
+    <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+
+        <!-- VIEW TOGGLE -->
+        <div class="bg-gray-200 p-1 rounded-xl flex">
+            <button id="btnHotel" class="flex-1 py-3 rounded-lg text-sm transition-all duration-200 toggle-btn-active" onclick="setView('hotel')">
+                🏨 View as Hotel Manager
+            </button>
+            <button id="btnPartner" class="flex-1 py-3 rounded-lg text-sm transition-all duration-200 toggle-btn-inactive" onclick="setView('partner')">
+                🤝 View as Norovari Partner
+            </button>
+        </div>
+
+        <!-- Input Section -->
+        <div class="bg-white p-6 rounded-xl shadow-md border border-gray-100">
+            <h2 id="inputTitle" class="text-xl font-semibold text-emerald-900 mb-6">Configure Property</h2>
+
+            <!-- Slider 1: Screens -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <span id="screensLabel">Number of Screens / Rooms:</span> <span id="screensDisplay" class="font-bold text-emerald-700 text-lg">50</span>
+                </label>
+                <input type="range" id="screens" min="10" max="200" value="50" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+            </div>
+
+            <!-- Dropdown: Plan -->
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Select Visto Plan</label>
+                <select id="plan" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition">
+                    <option value="standard">Standard Plan (R99 / screen / month)</option>
+                    <option value="luxe">Luxe Plan (R299 / screen / month)</option>
+                </select>
+                <p id="planDescription" class="text-xs text-gray-500 mt-1">Hotel keeps 70% of supplier commissions. (Visto takes 30%).</p>
+            </div>
+
+            <!-- Slider 2: Booking Value (Hotel View Only) -->
+            <div id="hotelInput" class="mb-2">
+                <label class="block text-sm font-medium text-gray-700 mb-2">
+                    Est. Guest Booking Value per Room/Month: <span class="font-bold text-emerald-700 text-lg">R<span id="bookingDisplay">1500</span></span>
+                </label>
+                <input type="range" id="bookingValue" min="500" max="5000" value="1500" step="100" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+                <p class="text-xs text-gray-500 mt-2 italic">*e.g., Guests booking local tours, dinners, or transfers via the TV.</p>
+            </div>
+        </div>
+
+        <!-- Output Section: HOTEL VIEW -->
+        <div id="hotelOutput" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-gray-100 p-6 rounded-xl border border-gray-200">
+                <p class="text-sm text-gray-600 font-medium uppercase tracking-wide">Monthly Subscription Cost</p>
+                <p class="text-3xl font-bold text-gray-800 mt-2">R<span id="monthlySub">4,950</span></p>
+            </div>
+            <div class="bg-emerald-50 p-6 rounded-xl border border-emerald-200">
+                <p class="text-sm text-emerald-700 font-medium uppercase tracking-wide">Total Supplier Commission Generated</p>
+                <p class="text-3xl font-bold text-emerald-800 mt-2">R<span id="totalCommission">7,500</span></p>
+                <p class="text-xs text-emerald-600 mt-1">Based on 10% avg. commission from local suppliers</p>
+            </div>
+            <div class="bg-amber-50 p-6 rounded-xl border border-amber-200">
+                <p class="text-sm text-amber-800 font-medium uppercase tracking-wide">Hotel's Net Commission Earnings</p>
+                <p class="text-3xl font-bold text-amber-900 mt-2">R<span id="businessShare">5,250</span></p>
+                <p class="text-xs text-amber-700 mt-1" id="sharePctText">Hotel keeps 70% of the commission pool</p>
+            </div>
+            <div class="bg-emerald-900 p-6 rounded-xl border border-emerald-800 text-white shadow-lg">
+                <p class="text-sm text-emerald-200 font-medium uppercase tracking-wide">Estimated Net Monthly Profit</p>
+                <p class="text-4xl font-bold text-amber-400 mt-2">R<span id="netProfit">300</span></p>
+                <p class="text-xs text-emerald-200 mt-1">Earnings minus Subscription Cost</p>
+            </div>
+        </div>
+
+        <!-- Output Section: PARTNER VIEW (Hidden by default) -->
+        <div id="partnerOutput" class="hidden grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="bg-gray-100 p-6 rounded-xl border border-gray-200">
+                <p class="text-sm text-gray-600 font-medium uppercase tracking-wide">Total Monthly Subscription Value</p>
+                <p class="text-3xl font-bold text-gray-800 mt-2">R<span id="partnerTotalSub">4,950</span></p>
+                <p class="text-xs text-gray-500 mt-1">Paid by the hotel to Visto</p>
+            </div>
+            <div class="bg-emerald-50 p-6 rounded-xl border border-emerald-200">
+                <p class="text-sm text-emerald-700 font-medium uppercase tracking-wide">Norovari's Recurring Commission</p>
+                <p class="text-3xl font-bold text-emerald-800 mt-2">R<span id="partnerCommission">1,237</span></p>
+                <p class="text-xs text-emerald-600 mt-1">Your 25% share of the subscription revenue</p>
+            </div>
+            <div class="bg-amber-50 p-6 rounded-xl border border-amber-200 md:col-span-2">
+                <p class="text-sm text-amber-800 font-medium uppercase tracking-wide">Norovari Annual Recurring Revenue (ARR)</p>
+                <p class="text-4xl font-bold text-amber-900 mt-2">R<span id="partnerAnnual">14,850</span></p>
+                <p class="text-xs text-amber-700 mt-1">Per property, as long as the subscription remains active</p>
+            </div>
+        </div>
+
+        <!-- Value Add Banner -->
+        <div class="bg-gradient-to-r from-amber-100 to-amber-50 p-6 rounded-xl border border-amber-300 flex items-start space-x-4">
+            <div class="text-3xl">🎁</div>
+            <div>
+                <h3 class="font-bold text-amber-900 text-lg">Zero-Effort Setup Included</h3>
+                <p class="text-amber-800 text-sm mt-1">Visto handles all local research, content creation, and uploads for the King Cetshwayo area. Plus, guests get a branded digital "Visto Rewards" discount card to use at local partners.</p>
+            </div>
+        </div>
+
+        <footer class="text-center text-xs text-gray-500 pt-4 border-t border-gray-200">
+            <p>Powered by <span class="font-semibold text-emerald-800">Norovari Tours</span> & <span class="font-semibold text-emerald-800">Visto.host</span></p>
+            <p class="mt-1">*Note: Percentages and pricing are working assumptions based on initial partnership discussions, subject to final agreement.</p>
+        </footer>
+
+    </main>
+
+    <script>
+        // Constants
+        const STANDARD_COST = 99;
+        const LUXE_COST = 299; 
+        const SUPPLIER_COMMISION_RATE = 0.10; 
+        const STANDARD_HOTEL_SHARE = 0.70; 
+        const LUXE_HOTEL_SHARE = 0.90;     
+        const NOROVARI_COMMISION_PCT = 0.25; // Your 25% cut of the subscription
+
+        let currentView = 'hotel';
+
+        // DOM Elements
+        const screensInput = document.getElementById('screens');
+        const screensDisplay = document.getElementById('screensDisplay');
+        const planInput = document.getElementById('plan');
+        const planDescription = document.getElementById('planDescription');
+        const bookingInput = document.getElementById('bookingValue');
+        const bookingDisplay = document.getElementById('bookingDisplay');
+
+        const formatZAR = (num) => Math.round(num).toLocaleString('en-ZA');
+
+        function setView(view) {
+            currentView = view;
+            const btnHotel = document.getElementById('btnHotel');
+            const btnPartner = document.getElementById('btnPartner');
+            const hotelOutput = document.getElementById('hotelOutput');
+            const partnerOutput = document.getElementById('partnerOutput');
+            const hotelInput = document.getElementById('hotelInput');
+            const inputTitle = document.getElementById('inputTitle');
+            const screensLabel = document.getElementById('screensLabel');
+
+            if (view === 'hotel') {
+                btnHotel.className = "flex-1 py-3 rounded-lg text-sm transition-all duration-200 toggle-btn-active";
+                btnPartner.className = "flex-1 py-3 rounded-lg text-sm transition-all duration-200 toggle-btn-inactive";
+                hotelOutput.classList.remove('hidden');
+                partnerOutput.classList.add('hidden');
+                hotelInput.classList.remove('hidden');
+                inputTitle.textContent = "Configure Property";
+                screensLabel.textContent = "Number of Screens / Rooms:";
+            } else {
+                btnPartner.className = "flex-1 py-3 rounded-lg text-sm transition-all duration-200 toggle-btn-active";
+                btnHotel.className = "flex-1 py-3 rounded-lg text-sm transition-all duration-200 toggle-btn-inactive";
+                hotelOutput.classList.add('hidden');
+                partnerOutput.classList.remove('hidden');
+                hotelInput.classList.add('hidden');
+                inputTitle.textContent = "Model Your Norovari Revenue";
+                screensLabel.textContent = "Total Screens Managed (across all properties):";
+            }
+            calculate();
+        }
+
+        function calculate() {
+            const screens = parseInt(screensInput.value);
+            const plan = planInput.value;
+            screensDisplay.textContent = screens;
+
+            const subCostPerScreen = plan === 'luxe' ? LUXE_COST : STANDARD_COST;
+            const totalSubscriptionValue = screens * subCostPerScreen;
+            
+            // Norovari Partner Math
+            const norovariMonthlyCommission = totalSubscriptionValue * NOROVARI_COMMISION_PCT;
+            const norovariAnnualCommission = norovariMonthlyCommission * 12;
+
+            if (currentView === 'partner') {
+                document.getElementById('partnerTotalSub').textContent = formatZAR(totalSubscriptionValue);
+                document.getElementById('partnerCommission').textContent = formatZAR(norovariMonthlyCommission);
+                document.getElementById('partnerAnnual').textContent = formatZAR(norovariAnnualCommission);
+                return; // Skip hotel math
+            }
+
+            // Hotel Manager Math
+            const bookingValue = parseInt(bookingInput.value);
+            bookingDisplay.textContent = formatZAR(bookingValue);
+
+            const totalBookingValue = screens * bookingValue;
+            const totalCommissionPool = totalBookingValue * SUPPLIER_COMMISION_RATE;
+            
+            const hotelSharePct = plan === 'luxe' ? LUXE_HOTEL_SHARE : STANDARD_HOTEL_SHARE;
+            const hotelEarnings = totalCommissionPool * hotelSharePct;
+            const netProfit = hotelEarnings - totalSubscriptionValue;
+
+            document.getElementById('monthlySub').textContent = formatZAR(totalSubscriptionValue);
+            document.getElementById('totalCommission').textContent = formatZAR(totalCommissionPool);
+            document.getElementById('businessShare').textContent = formatZAR(hotelEarnings);
+            document.getElementById('netProfit').textContent = formatZAR(netProfit);
+
+            const vistoSharePct = Math.round((1 - hotelSharePct) * 100);
+            const hotelShareDisplay = Math.round(hotelSharePct * 100);
+            
+            planDescription.textContent = `Hotel keeps ${hotelShareDisplay}% of supplier commissions. (Visto takes ${vistoSharePct}%).`;
+            document.getElementById('sharePctText').textContent = `Hotel keeps ${hotelShareDisplay}% of the commission pool`;
+
+            if (netProfit >= 0) {
+                document.getElementById('netProfit').classList.remove('text-red-400');
+                document.getElementById('netProfit').classList.add('text-amber-400');
+            } else {
+                document.getElementById('netProfit').classList.remove('text-amber-400');
+                document.getElementById('netProfit').classList.add('text-red-400');
+            }
+        }
+
+        screensInput.addEventListener('input', calculate);
+        bookingInput.addEventListener('input', calculate);
+        planInput.addEventListener('change', calculate);
+
+        calculate();
+    </script>
+</body>
+</html>
